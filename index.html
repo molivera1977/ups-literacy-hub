@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QPS Literacy Hub | Teacher Edition</title>
+    <style>
+        :root {
+            --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --danger: #e74c3c;
+            --learning: #f39c12; --nonsense: #8e44ad; --bg: #001f3f; 
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background-color: var(--bg); 
+            background-image: linear-gradient(180deg, #001f3f 0%, #001226 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; padding: 20px; margin: 0; align-items: center; 
+        }
+
+        .hub-container { 
+            background: white; padding: 2.5rem; border-radius: 20px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+            max-width: 900px; width: 100%; text-align: center; position: relative;
+        }
+
+        /* WELCOME SCREEN */
+        #welcomeView { display: block; }
+        #appView { display: none; }
+
+        .welcome-title { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; font-weight: 800; }
+        .welcome-sub { font-size: 1.1rem; color: #7f8c8d; margin-bottom: 40px; }
+        
+        .menu-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .menu-card {
+            background: #f8fbfd; border: 2px solid #e2e8f0; border-radius: 15px;
+            padding: 30px; width: 200px; cursor: pointer; transition: all 0.2s ease; text-align: center;
+        }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--accent); }
+        .menu-card h3 { margin: 15px 0 5px 0; color: var(--primary); }
+        .icon { font-size: 3rem; }
+
+        /* APP UI */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .tab { flex: 1; padding: 12px; cursor: pointer; border-radius: 10px; font-weight: bold; background: #f8f9fa; color: #7f8c8d; transition: 0.3s;}
+        .tab.active-test { background: var(--accent); color: white; }
+        .tab.active-learn { background: var(--learning); color: white; }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        .display-box { background: #f8fbfd; min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 15px; margin: 20px 0; border: 2px dashed #cbd5e1; padding: 20px;}
+        .word-main { font-size: 5rem; font-weight: 800; margin: 0; letter-spacing: 2px; transition: 0.3s; line-height: 1.2; color: var(--primary); }
+        .sentence-mode { font-size: 2.5rem; font-weight: 600; letter-spacing: 1px; text-align: left; line-height: 1.4; }
+        
+        /* SCORING UI */
+        .score-controls { display: flex; gap: 15px; justify-content: center; margin-top: 10px; }
+        .btn-score { padding: 15px 30px; border-radius: 10px; font-size: 1.5rem; border: none; cursor: pointer; transition: 0.2s; width: 120px; }
+        .btn-correct { background: var(--success); color: white; }
+        .btn-wrong { background: var(--danger); color: white; }
+        .btn-correct:hover, .btn-wrong:hover { transform: scale(1.05); filter: brightness(1.1); }
+        
+        .result-badge { font-size: 1.5rem; font-weight: bold; padding: 10px 20px; border-radius: 50px; display: inline-block; margin-top: 10px; }
+        .badge-pass { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .badge-fail { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
+
+        /* CHUNKS */
+        #chunkDisplay { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 15px; min-height: 3.5rem; }
+        .chunk { padding: 5px 15px; border-radius: 8px; background: #e2e8f0; color: #64748b; font-size: 2.5rem; font-weight: bold; }
+        .chunk.active { background: var(--learning); color: white; transform: scale(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        select { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 1rem; margin-bottom: 15px; font-weight: bold; color: var(--primary);}
+        
+        button.btn-test { background: var(--accent); color: white; width: 100%; padding: 15px; font-size: 1.1rem; border: none; border-radius: 8px; cursor: pointer; }
+        button.btn-learn { background: var(--learning); color: white; padding: 15px 25px; font-size: 1.1rem; border: none; border-radius: 8px; cursor: pointer; margin: 5px; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; background: #95a5a6; }
+
+        .nonsense-color { color: var(--nonsense); }
+        .helper-text { font-size: 0.9rem; color: #94a3b8; margin-top: 10px; }
+        .home-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #bdc3c7; }
+        .home-btn:hover { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div id="welcomeView" class="hub-container">
+    <h1 class="welcome-title">QPS Literacy Hub</h1>
+    <p class="welcome-sub">Select a mode to get started</p>
+
+    <div class="menu-grid">
+        <div class="menu-card" onclick="enterApp('learn')">
+            <div class="icon">🎧</div>
+            <h3>Learning Lab</h3>
+            <p>Practice blending.</p>
+        </div>
+        <div class="menu-card" onclick="enterApp('test')">
+            <div class="icon">📝</div>
+            <h3>Assessment</h3>
+            <p>Teacher Grading Mode.</p>
+        </div>
+    </div>
+</div>
+
+<div id="appView" class="hub-container">
+    <button class="home-btn" onclick="goHome()" title="Back to Menu">🏠</button>
+
+    <div class="tabs">
+        <div id="tabTest" class="tab" onclick="switchTab('test')">Assessment Mode</div>
+        <div id="tabLearn" class="tab" onclick="switchTab('learn')">Learning Lab</div>
+    </div>
+
+    <select id="levelPicker" onchange="resetAll()">
+        <optgroup label="Task 1: Alphabet">
+            <option value="1a">Task 1(a): Letters (Set 1)</option>
+            <option value="1b">Task 1(b): Letters (Set 2)</option>
+        </optgroup>
+        <optgroup label="Task 2: CVC Words">
+            <option value="2a">Task 2(a): CVC Nonsense</option>
+            <option value="2b">Task 2(b): CVC Sentences</option>
+        </optgroup>
+        <optgroup label="Task 3: Consonant Digraphs">
+            <option value="3a">Task 3(a): Digraph Nonsense</option>
+            <option value="3b">Task 3(b): Digraph Sentences</option>
+        </optgroup>
+        <optgroup label="Task 4: Consonant Blends">
+            <option value="4a">Task 4(a): Blends Nonsense</option>
+            <option value="4b">Task 4(b): Blends Sentences</option>
+        </optgroup>
+        <optgroup label="Task 5: Silent e">
+            <option value="5a">Task 5(a): Silent e Nonsense</option>
+            <option value="5b">Task 5(b): Silent e Sentences</option>
+        </optgroup>
+        <optgroup label="Task 6: R-Controlled Vowels">
+            <option value="6a">Task 6(a): R-Controlled Nonsense</option>
+            <option value="6b">Task 6(b): R-Controlled Sentences</option>
+        </optgroup>
+        <optgroup label="Task 7: Advanced Consonants">
+            <option value="7a">Task 7(a): Adv Consonants Nonsense</option>
+            <option value="7b">Task 7(b): Adv Consonants Sentences</option>
+        </optgroup>
+        <optgroup label="Task 8: Vowel Teams">
+            <option value="8">Task 8: Vowel Teams (Mixed)</option>
+        </optgroup>
+        <optgroup label="Task 9: Multisyllabic Words">
+            <option value="9a">Task 9(a): Two-Syllable</option>
+            <option value="9b">Task 9(b): Three-Syllable</option>
+            <option value="9c">Task 9(c): Four-Syllable</option>
+        </optgroup>
+        <optgroup label="Task 10: Structural Analysis">
+            <option value="10">Task 10: Prefixes & Suffixes</option>
+        </optgroup>
+    </select>
+
+    <div id="testSection" class="view-section">
+        <div class="display-box">
+            <p id="testWord" class="word-main">READY?</p>
+            <div id="testType" class="helper-text">Assessment Mode</div>
+            <div id="resultBadge" style="display:none;"></div>
+        </div>
+        
+        <button id="startTest" class="btn-test" onclick="startTest()">START ASSESSMENT</button>
+        
+        <div id="scoreControls" class="score-controls" style="display:none;">
+            <button class="btn-score btn-wrong" onclick="markScore(false)">❌</button>
+            <button class="btn-score btn-correct" onclick="markScore(true)">✅</button>
+        </div>
+    </div>
+
+    <div id="learnSection" class="view-section">
+        <div class="display-box">
+            <div id="chunkDisplay"></div>
+            <p id="learnWord" class="word-main" style="opacity: 0.3;">---</p>
+        </div>
+        <div style="display:flex; flex-direction: column;">
+            <div style="display:flex; justify-content: center;">
+                <button id="blendBtn" class="btn-learn" onclick="playBlending()">🔊 HEAR IT</button>
+                <button id="nextLearnBtn" class="btn-learn" style="background:#34495e" onclick="nextLearn()">NEXT ➡️</button>
+            </div>
+            <p id="learnMsg" class="helper-text">
+                The computer will read the full word after you hear the sounds.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- NAVIGATION ---
+    function enterApp(mode) {
+        document.getElementById('welcomeView').style.display = 'none';
+        document.getElementById('appView').style.display = 'block';
+        switchTab(mode);
+    }
+
+    function goHome() {
+        document.getElementById('appView').style.display = 'none';
+        document.getElementById('welcomeView').style.display = 'block';
+        resetAll();
+    }
+
+    function switchTab(mode) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active-test', 'active-learn'));
+
+        if(mode === 'test') {
+            document.getElementById('testSection').classList.add('active');
+            document.getElementById('tabTest').classList.add('active-test');
+        } else {
+            document.getElementById('learnSection').classList.add('active');
+            document.getElementById('tabLearn').classList.add('active-learn');
+            setupLearn();
+        }
+        resetAll(false); 
+    }
+
+    // --- WORD BANK ---
+    const wordBank = {
+        "1a": [ {w: "m", c:["m"], n: false}, {w: "t", c:["t"], n: false}, {w: "a", c:["a"], n: false}, {w: "s", c:["s"], n: false}, {w: "i", c:["i"], n: false}, {w: "r", c:["r"], n: false}, {w: "d", c:["d"], n: false}, {w: "f", c:["f"], n: false}, {w: "o", c:["o"], n: false}, {w: "g", c:["g"], n: false}, {w: "l", c:["l"], n: false}, {w: "h", c:["h"], n: false}, {w: "u", c:["u"], n: false}, {w: "c", c:["c"], n: false}, {w: "n", c:["n"], n: false}, {w: "b", c:["b"], n: false}, {w: "j", c:["j"], n: false}, {w: "k", c:["k"], n: false} ],
+        "1b": [ {w: "y", c:["y"], n: false}, {w: "e", c:["e"], n: false}, {w: "w", c:["w"], n: false}, {w: "p", c:["p"], n: false}, {w: "v", c:["v"], n: false}, {w: "qu", c:["qu"], n: false}, {w: "x", c:["x"], n: false}, {w: "z", c:["z"], n: false} ],
+        "2a": [ {w: "wat", c:["w","a","t"], n: true}, {w: "fod", c:["f","o","d"], n: true}, {w: "leb", c:["l","e","b"], n: true}, {w: "tum", c:["t","u","m"], n: true}, {w: "pon", c:["p","o","n"], n: true}, {w: "sib", c:["s","i","b"], n: true}, {w: "cug", c:["c","u","g"], n: true}, {w: "raf", c:["r","a","f"], n: true}, {w: "mip", c:["m","i","p"], n: true}, {w: "hev", c:["h","e","v"], n: true} ],
+        "2b": [ {w: "Sam and Ben hid the gum.", isSentence: true}, {w: "Pat had a nap in bed.", isSentence: true}, {w: "Mom had a top on a big pot.", isSentence: true}, {w: "Tim can sit in a tub.", isSentence: true} ],
+        "3a": [ {w: "shap", c:["sh","a","p"], n: true}, {w: "ming", c:["m","i","ng"], n: true}, {w: "gack", c:["g","a","ck"], n: true}, {w: "whum", c:["wh","u","m"], n: true}, {w: "pith", c:["p","i","th"], n: true}, {w: "chan", c:["ch","a","n"], n: true}, {w: "thog", c:["th","o","g"], n: true}, {w: "kosh", c:["k","o","sh"], n: true}, {w: "mich", c:["m","i","ch"], n: true}, {w: "whaf", c:["wh","a","f"], n: true} ],
+        "3b": [ {w: "That duck had a wet wing.", isSentence: true}, {w: "Dad hit a log with a whip.", isSentence: true}, {w: "When can Chip pack?", isSentence: true}, {w: "A fish is in that tub.", isSentence: true} ],
+        "4a": [ {w: "clab", c:["c","l","a","b"], n: true}, {w: "trin", c:["t","r","i","n"], n: true}, {w: "snaf", c:["s","n","a","f"], n: true}, {w: "greb", c:["g","r","e","b"], n: true}, {w: "slad", c:["s","l","a","d"], n: true}, {w: "fosp", c:["f","o","s","p"], n: true}, {w: "lonk", c:["l","o","n","k"], n: true}, {w: "mant", c:["m","a","n","t"], n: true}, {w: "jast", c:["j","a","s","t"], n: true}, {w: "sund", c:["s","u","n","d"], n: true} ],
+        "4b": [ {w: "Glen will swim past the raft in the pond.", isSentence: true}, {w: "The frog must flip and spin and jump.", isSentence: true} ],
+        "5a": [ {w: "sice", c:["s","ice"], n: true}, {w: "nole", c:["n","ole"], n: true}, {w: "fune", c:["f","une"], n: true}, {w: "moze", c:["m","oze"], n: true}, {w: "vate", c:["v","ate"], n: true}, {w: "rine", c:["r","ine"], n: true}, {w: "lade", c:["l","ade"], n: true}, {w: "sile", c:["s","ile"], n: true}, {w: "gane", c:["g","ane"], n: true}, {w: "fote", c:["f","ote"], n: true} ],
+        "5b": [ {w: "Mike and Jane use a rope to ride the mule.", isSentence: true}, {w: "Pete had five tapes at home.", isSentence: true} ],
+        "6a": [ {w: "cort", c:["c","or","t"], n: true}, {w: "pirk", c:["p","ir","k"], n: true}, {w: "varb", c:["v","ar","b"], n: true}, {w: "serl", c:["s","er","l"], n: true}, {w: "surd", c:["s","ur","d"], n: true}, {w: "tarn", c:["t","ar","n"], n: true}, {w: "forp", c:["f","or","p"], n: true}, {w: "murk", c:["m","ur","k"], n: true}, {w: "tirn", c:["t","ir","n"], n: true}, {w: "kerm", c:["k","er","m"], n: true} ],
+        "6b": [ {w: "The tar on his torn shirt burned and hurt him.", isSentence: true}, {w: "The bird hid under the short ferns in the park.", isSentence: true} ],
+        "7a": [ {w: "litch", c:["l","i","tch"], n: true}, {w: "mudge", c:["m","u","dge"], n: true}, {w: "glux", c:["g","l","u","x"], n: true}, {w: "quam", c:["qu","a","m"], n: true}, {w: "celp", c:["c","e","l","p"], n: true}, {w: "gerb", c:["g","er","b"], n: true}, {w: "knaz", c:["kn","a","z"], n: true}, {w: "gnap", c:["gn","a","p"], n: true}, {w: "wrill", c:["wr","i","ll"], n: true}, {w: "ralk", c:["r","al","k"], n: true} ],
+        "7b": [ {w: "The milk is in the wrong cup.", isSentence: true}, {w: "She ran to the center of the bridge.", isSentence: true}, {w: "I will stitch a knot on the quilt.", isSentence: true}, {w: "The giant dog will gnaw on the box.", isSentence: true} ],
+        "8": [ {w: "foat", c:["f","oa","t"], n: true}, {w: "roast", c:["r","oa","s","t"], n: false}, {w: "frea", c:["f","r","ea"], n: true}, {w: "creak", c:["c","r","ea","k"], n: false}, {w: "moom", c:["m","oo","m"], n: true}, {w: "scoop", c:["s","c","oo","p"], n: false}, {w: "raim", c:["r","ai","m"], n: true}, {w: "waist", c:["w","ai","s","t"], n: false}, {w: "folt", c:["f","ol","t"], n: true}, {w: "scold", c:["s","c","ol","d"], n: false}, {w: "dray", c:["d","r","ay"], n: false}, {w: "gray", c:["g","r","ay"], n: false}, {w: "chout", c:["ch","ou","t"], n: true}, {w: "mount", c:["m","ou","n","t"], n: false}, {w: "poid", c:["p","oi","d"], n: true}, {w: "join", c:["j","oi","n"], n: false}, {w: "moy", c:["m","oy"], n: true}, {w: "royal", c:["roy","al"], n: false}, {w: "vaul", c:["v","au","l"], n: true}, {w: "fault", c:["f","au","l","t"], n: false}, {w: "praw", c:["p","r","aw"], n: true}, {w: "straw", c:["s","t","r","aw"], n: false}, {w: "koe", c:["k","oe"], n: true}, {w: "toe", c:["t","oe"], n: false}, {w: "frew", c:["f","r","ew"], n: true}, {w: "jewel", c:["jew","el"], n: false}, {w: "palk", c:["p","al","k"], n: true}, {w: "scald", c:["s","c","al","d"], n: false}, {w: "pigh", c:["p","igh"], n: true}, {w: "fight", c:["f","igh","t"], n: false} ],
+        "9a": [ {w: "mascot", c:["mas","cot"], n: false}, {w: "basket", c:["bas","ket"], n: false}, {w: "moment", c:["mo","ment"], n: false}, {w: "bacon", c:["ba","con"], n: false}, {w: "handle", c:["han","dle"], n: false}, {w: "puzzle", c:["puz","zle"], n: false}, {w: "cartoon", c:["car","toon"], n: false}, {w: "order", c:["or","der"], n: false}, {w: "escape", c:["es","cape"], n: false}, {w: "chowder", c:["chow","der"], n: false} ],
+        "9b": [ {w: "amputate", c:["am","pu","tate"], n: false}, {w: "liberty", c:["lib","er","ty"], n: false}, {w: "dominate", c:["dom","i","nate"], n: false}, {w: "elastic", c:["e","las","tic"], n: false}, {w: "entertain", c:["en","ter","tain"], n: false}, {w: "practical", c:["prac","ti","cal"], n: false}, {w: "innocent", c:["in","no","cent"], n: false}, {w: "electric", c:["e","lec","tric"], n: false}, {w: "volcano", c:["vol","ca","no"], n: false}, {w: "segregate", c:["seg","re","gate"], n: false} ],
+        "9c": [ {w: "particular", c:["par","tic","u","lar"], n: false}, {w: "contaminate", c:["con","tam","i","nate"], n: false}, {w: "community", c:["com","mu","ni","ty"], n: false}, {w: "superior", c:["su","pe","ri","or"], n: false}, {w: "vitality", c:["vi","tal","i","ty"], n: false}, {w: "evaporate", c:["e","vap","o","rate"], n: false}, {w: "inventory", c:["in","ven","to","ry"], n: false}, {w: "prehistoric", c:["pre","his","tor","ic"], n: false}, {w: "solitary", c:["sol","i","tar","y"], n: false}, {w: "emergency", c:["e","mer","gen","cy"], n: false} ],
+        "10": [ {w: "discount", c:["dis","count"], n: false}, {w: "dismiss", c:["dis","miss"], n: false}, {w: "nonsense", c:["non","sense"], n: false}, {w: "nonstop", c:["non","stop"], n: false}, {w: "index", c:["in","dex"], n: false}, {w: "intent", c:["in","tent"], n: false}, {w: "prefix", c:["pre","fix"], n: false}, {w: "prepare", c:["pre","pare"], n: false}, {w: "return", c:["re","turn"], n: false}, {w: "replay", c:["re","play"], n: false}, {w: "unable", c:["un","able"], n: false}, {w: "uncertain", c:["un","cer","tain"], n: false}, {w: "confident", c:["con","fi","dent"], n: false}, {w: "concert", c:["con","cert"], n: false}, {w: "station", c:["sta","tion"], n: false}, {w: "motion", c:["mo","tion"], n: false}, {w: "famous", c:["fa","mous"], n: false}, {w: "joyous", c:["joy","ous"], n: false}, {w: "coolness", c:["cool","ness"], n: false}, {w: "wildness", c:["wild","ness"], n: false}, {w: "portable", c:["port","able"], n: false}, {w: "drinkable", c:["drink","able"], n: false}, {w: "fastest", c:["fast","est"], n: false}, {w: "dampest", c:["damp","est"], n: false}, {w: "mouthful", c:["mouth","ful"], n: false}, {w: "fearful", c:["fear","ful"], n: false}, {w: "honorary", c:["hon","or","ar","y"], n: false}, {w: "literary", c:["lit","er","ar","y"], n: false}, {w: "instrument", c:["in","stru","ment"], n: false}, {w: "fragment", c:["frag","ment"], n: false} ]
+    };
+
+    let testIndex = 0;
+    let learnIndex = 0;
+    let activeTestWords = [];
+    let currentScore = 0;
+
+    // --- AUDIO ENGINE ---
+
+    function playAudioChunk(chunkName) {
+        return new Promise((resolve) => {
+            let fileName = chunkName.toLowerCase().trim(); // Auto-removes accidental spaces
+            const lv = document.getElementById('levelPicker').value;
+            
+            // SECRET OVERRIDE 1: The "Y" Sounds
+            if (fileName === "y" && (lv === "9c" || lv === "10")) {
+                fileName = "y-ee"; 
+            }
+
+            // SECRET OVERRIDE 2: The "RE" Sounds
+            if (fileName === "re") {
+                if (lv === "10") {
+                    fileName = "re-long"; // return, replay
+                } else {
+                    fileName = "re-short"; // segregate
+                }
+            }
+            
+            // SECRET OVERRIDE 3: The "O" Schwa Sound
+            if (fileName === "o" && lv === "9c") {
+                fileName = "o-schwa"; // evaporate
+            }
+
+            const audio = new Audio(`audio/${fileName}.m4a`);
+            audio.onended = resolve;
+            audio.onerror = () => { 
+                console.log(`Audio missing: ${chunkName} (searched for ${fileName}.m4a)`); 
+                resolve(); 
+            };
+            audio.play().catch(() => resolve());
+        });
+    }
+
+    function speakComputer(text) {
+        return new Promise((resolve) => {
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.rate = 0.85; 
+            msg.onend = resolve;
+            msg.onerror = resolve;
+            window.speechSynthesis.speak(msg);
+        });
+    }
+
+    function playFullWord(text) {
+        return new Promise((resolve) => {
+            const audio = new Audio(`${text.toLowerCase().trim()}.m4a`);
+            let hasHandled = false;
+            const doFallback = () => { if(!hasHandled) { hasHandled = true; speakComputer(text).then(resolve); } };
+            audio.onended = () => { if(!hasHandled) { hasHandled = true; resolve(); } };
+            audio.onerror = doFallback;
+            audio.play().catch(doFallback);
+        });
+    }
+
+    // --- LEARNING LAB LOGIC ---
+    function setupLearn() { learnIndex = 0; showLearnWord(); }
+
+    function showLearnWord() {
+        const lv = document.getElementById('levelPicker').value;
+        const wordObj = wordBank[lv][learnIndex];
+        const chunkContainer = document.getElementById('chunkDisplay');
+        const wordEl = document.getElementById('learnWord');
+        const blendBtn = document.getElementById('blendBtn');
+        const nextBtn = document.getElementById('nextLearnBtn');
+        const msg = document.getElementById('learnMsg');
+
+        blendBtn.disabled = false;
+        nextBtn.disabled = false;
+        chunkContainer.innerHTML = '';
+        wordEl.innerText = wordObj.w;
+
+        if (wordObj.isSentence) {
+            wordEl.className = 'word-main sentence-mode';
+            wordEl.style.opacity = "1";
+            msg.innerText = "Click to hear the sentence.";
+        } else {
+            wordEl.className = wordObj.n ? 'word-main nonsense-color' : 'word-main';
+            wordEl.style.opacity = "0.2";
+            msg.innerText = "Listen to the chunks, then the word.";
+            wordObj.c.forEach((chunk, i) => {
+                const span = document.createElement('span');
+                span.className = 'chunk';
+                span.id = `chunk-${i}`;
+                span.innerText = chunk;
+                chunkContainer.appendChild(span);
+            });
+        }
+    }
+
+    async function playBlending() {
+        const lv = document.getElementById('levelPicker').value;
+        const wordObj = wordBank[lv][learnIndex];
+        const wordEl = document.getElementById('learnWord');
+        const playBtn = document.getElementById('blendBtn');
+        const nextBtn = document.getElementById('nextLearnBtn');
+        
+        playBtn.disabled = true;
+        nextBtn.disabled = true;
+
+        if(wordObj.isSentence) {
+            await speakComputer(wordObj.w);
+        } else {
+            wordEl.style.opacity = "0.2";
+            for (let i = 0; i < wordObj.c.length; i++) {
+                const chunkSpan = document.getElementById(`chunk-${i}`);
+                chunkSpan.classList.add('active');
+                await playAudioChunk(wordObj.c[i]); 
+                chunkSpan.classList.remove('active');
+                await new Promise(r => setTimeout(r, 100)); 
+            }
+            await new Promise(r => setTimeout(r, 200));
+            wordEl.style.opacity = "1";
+            await playFullWord(wordObj.w);
+        }
+        
+        playBtn.disabled = false;
+        nextBtn.disabled = false;
+    }
+
+    function nextLearn() {
+        const lv = document.getElementById('levelPicker').value;
+        learnIndex = (learnIndex + 1) % wordBank[lv].length;
+        showLearnWord();
+    }
+
+    // --- ASSESSMENT LOGIC (WITH SCORING) ---
+    function startTest() {
+        const lv = document.getElementById('levelPicker').value;
+        if(wordBank[lv][0].isSentence) {
+            activeTestWords = [...wordBank[lv]];
+        } else {
+            activeTestWords = [...wordBank[lv]].sort(() => Math.random() - 0.5);
+        }
+        testIndex = 0;
+        currentScore = 0;
+        
+        document.getElementById('startTest').style.display = 'none';
+        document.getElementById('scoreControls').style.display = 'flex';
+        document.getElementById('resultBadge').style.display = 'none';
+        
+        showTestWord();
+    }
+
+    function showTestWord() {
+        if(testIndex < activeTestWords.length) {
+            const wordObj = activeTestWords[testIndex];
+            const el = document.getElementById('testWord');
+            el.innerText = wordObj.w;
+            if (wordObj.isSentence) {
+                el.className = 'word-main sentence-mode';
+                document.getElementById('testType').innerText = `Item ${testIndex + 1} of ${activeTestWords.length}`;
+            } else {
+                el.className = wordObj.n ? 'word-main nonsense-color' : 'word-main';
+                document.getElementById('testType').innerText = `Word ${testIndex + 1} of ${activeTestWords.length} (${wordObj.n ? "Nonsense" : "Real"})`;
+            }
+        } else {
+            finishTest();
+        }
+    }
+
+    function markScore(isCorrect) {
+        if(isCorrect) currentScore++;
+        testIndex++;
+        showTestWord();
+    }
+
+    function finishTest() {
+        document.getElementById('testWord').className = 'word-main';
+        document.getElementById('scoreControls').style.display = 'none';
+        
+        const total = activeTestWords.length;
+        const percent = Math.round((currentScore / total) * 100);
+        let badgeHTML = "";
+
+        if (percent >= 80) {
+            badgeHTML = `<div class="result-badge badge-pass">🛡️ MASTERY (${currentScore}/${total})</div>`;
+            document.getElementById('testWord').innerText = "GREAT JOB!";
+            document.getElementById('testType').innerText = "Student is ready for the next level.";
+        } else {
+            badgeHTML = `<div class="result-badge badge-fail">⚠️ NEEDS PRACTICE (${currentScore}/${total})</div>`;
+            document.getElementById('testWord').innerText = "KEEP TRYING";
+            document.getElementById('testType').innerText = "Review previous skills before moving on.";
+        }
+
+        const badgeEl = document.getElementById('resultBadge');
+        badgeEl.innerHTML = badgeHTML;
+        badgeEl.style.display = 'block';
+        
+        document.getElementById('startTest').innerText = "RESTART TEST";
+        document.getElementById('startTest').style.display = 'block';
+    }
+
+    function resetAll(resetView = true) {
+        document.getElementById('testWord').innerText = "READY?";
+        document.getElementById('testWord').className = 'word-main';
+        document.getElementById('startTest').innerText = "START ASSESSMENT";
+        document.getElementById('startTest').style.display = 'block';
+        document.getElementById('scoreControls').style.display = 'none';
+        document.getElementById('resultBadge').style.display = 'none';
+        
+        if(document.getElementById('learnSection').classList.contains('active')) {
+            setupLearn();
+        } else {
+            document.getElementById('testType').innerText = "Assessment Mode";
+        }
+    }
+</script>
+</body>
+</html>
